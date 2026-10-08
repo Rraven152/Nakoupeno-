@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nakoupeno!</title>
+<meta name="description" content="Váš nákupní seznam vždy po ruce.">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d9488">
+<script>
+try{var _t=JSON.parse(localStorage.getItem("theme"));if(_t!=="dark"&&_t!=="light")_t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=_t;}catch(e){}
+</script>
+<style>html{background:#f1f5f7}html[data-theme=dark]{background:#0e1417;color-scheme:dark}</style>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nakoupeno!">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{
+  --primary:#0d9488;--primary-d:#0f766e;--primary-soft:#ccfbf1;
+  --background:#f1f5f7;--card:#ffffff;--text:#1f2937;--muted:#6b7280;--line:#e5e9ee;
+  --danger:#ef4444;--success:#22c55e;--purple:#7c3aed;
+  --shadow:0 2px 10px rgba(15,23,42,.07);--radius:18px;
+}
+[data-theme=dark]{
+  --primary:#2dd4bf;--primary-d:#14b8a6;--primary-soft:#134e4a;
+  --background:#0e1417;--card:#172025;--text:#e6edf0;--muted:#8fa0a8;--line:#26323a;
+  --shadow:0 2px 12px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--background);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.4;transition:background .25s,color .25s}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.app{max-width:640px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 16px 120px}
+
+.header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--primary-d));display:grid;place-items:center;font-size:24px;box-shadow:var(--shadow);flex:none}
+.titles{flex:1;min-width:0}
+h1{font-size:1.15rem;margin:0;line-height:1.2}
+.titles p{margin:2px 0 0;font-size:.8rem;color:var(--muted)}
+.icon-btn{width:44px;height:44px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);font-size:20px;display:grid;place-items:center;transition:transform .15s}
+.icon-btn:hover{transform:translateY(-1px)}.icon-btn:active{transform:scale(.94)}
+.menu-wrap{position:relative}
+.menu{position:absolute;right:0;top:52px;min-width:250px;background:var(--card);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px;z-index:30;animation:pop .15s ease}
+.menu button{display:block;width:100%;text-align:left;padding:13px 14px;border-radius:12px;min-height:46px}
+.menu button:hover{background:var(--background)}
+.menu .danger{color:var(--danger)}
+
+.search{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:0 16px;height:54px;border:2px solid transparent;transition:border-color .2s}
+.search:focus-within{border-color:var(--primary)}
+.search input{flex:1;border:0;outline:0;background:none;height:100%;min-width:0}
+.search input::placeholder{color:var(--muted)}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.stat{position:relative;background:var(--card);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);overflow:hidden}
+.stat span{font-size:.78rem;color:var(--muted);display:block}
+.stat b{font-size:1.7rem;line-height:1.2;display:block;transition:transform .2s}
+.stat i{position:absolute;right:10px;top:10px;font-style:normal;font-size:.9rem;opacity:.8}
+.stat.todo b{color:var(--purple)}.stat.done b{color:var(--success)}
+[data-theme=dark] .stat.todo b{color:#a78bfa}
+.stat b.bump{transform:scale(1.25)}
+
+.filters{display:flex;gap:6px;background:var(--card);padding:5px;border-radius:16px;box-shadow:var(--shadow);margin-bottom:18px}
+.filters button{flex:1;height:42px;border-radius:12px;font-weight:600;color:var(--muted);transition:all .2s}
+.filters button.on{background:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(13,148,136,.35)}
+[data-theme=dark] .filters button.on{color:#06201d}
+
+.cat{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;animation:rise .3s ease}
+.cat-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line);font-weight:700;letter-spacing:.04em;font-size:.85rem;text-transform:uppercase}
+.cat-head .ic{font-size:1.3rem}.cat-head .name{flex:1}
+.cat-head .count{min-width:28px;height:28px;border-radius:99px;background:var(--primary-soft);color:var(--primary-d);display:grid;place-items:center;font-size:.8rem}
+[data-theme=dark] .cat-head .count{color:var(--primary)}
+.item{display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;border-bottom:1px solid var(--line);animation:rise .25s ease;transition:opacity .25s}
+.item:last-child{border-bottom:0}
+.item.removing{opacity:0;transform:translateX(30px);transition:all .25s}
+.chk{position:relative;width:28px;height:28px;flex:none}
+.chk input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer;z-index:1}
+.chk span{position:absolute;inset:0;border:2px solid var(--muted);border-radius:9px;display:grid;place-items:center;color:transparent;font-size:16px;font-weight:700;transition:all .2s}
+.chk input:checked+span{background:var(--success);border-color:var(--success);color:#fff}
+.chk input:focus-visible+span{outline:3px solid var(--primary);outline-offset:2px}
+.info{flex:1;min-width:0;cursor:pointer}
+.info .n{font-weight:600;overflow-wrap:anywhere;position:relative;display:inline-block;transition:color .25s}
+.info .n::after{content:"";position:absolute;left:0;top:55%;height:2px;width:0;background:currentColor;transition:width .3s}
+.info .q{display:block;font-size:.85rem;color:var(--muted)}
+.item.done .n{color:var(--muted)}.item.done .n::after{width:100%}.item.done .info{opacity:.55}
+.act{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:18px;transition:background .15s}
+.act:hover{background:var(--background)}
+
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty .big{font-size:64px}.empty h2{color:var(--text);margin:8px 0}.empty p{margin:0 auto 20px;max-width:280px}
+
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 18px);background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;font-weight:700;padding:0 28px;height:56px;border-radius:99px;box-shadow:0 8px 22px rgba(13,148,136,.45);z-index:10;transition:transform .15s,box-shadow .15s;white-space:nowrap}
+[data-theme=dark] .fab{color:#06201d}
+.fab:hover{transform:translateX(-50%) translateY(-2px)}.fab:active{transform:translateX(-50%) scale(.96)}
+
+.btn{height:48px;padding:0 20px;border-radius:14px;font-weight:700;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--primary);color:#fff}
+[data-theme=dark] .btn.primary{color:#06201d}
+.btn.primary:hover{background:var(--primary-d)}
+.btn.ghost{background:var(--background);color:var(--text)}
+.btn.ghost:hover{background:var(--line)}
+.btn.danger-btn{background:var(--danger);color:#fff}
+
+.overlay{position:fixed;inset:0;background:rgba(10,15,20,.55);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;z-index:50;animation:fade .2s}
+.overlay[hidden],[hidden]{display:none!important}
+.modal{background:var(--card);width:100%;max-width:480px;border-radius:24px 24px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom) + 20px);display:flex;flex-direction:column;gap:14px;max-height:92vh;overflow:auto;animation:slide .28s ease}
+@media(min-width:560px){.overlay{align-items:center}.modal{border-radius:24px;padding-bottom:22px}}
+.modal h2{margin:0;font-size:1.2rem}
+.modal p{margin:0}
+.modal label{display:flex;flex-direction:column;gap:6px;font-size:.85rem;font-weight:600;color:var(--muted)}
+.modal input[type=text],.modal input:not([type]),.modal select{height:50px;border-radius:14px;border:2px solid var(--line);background:var(--background);padding:0 14px;color:var(--text);outline:0;font-weight:400;transition:border-color .2s;appearance:none;-webkit-appearance:none}
+.modal select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 20px) 22px,calc(100% - 15px) 22px;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
+.modal input:focus,.modal select:focus{border-color:var(--primary)}
+.err{color:var(--danger);font-weight:600;font-size:.9rem}
+.hint{color:var(--muted);font-size:.9rem}
+.actions{display:flex;gap:10px;justify-content:flex-end}.actions .btn{flex:1}
+.switch-row{flex-direction:row!important;align-items:center;justify-content:space-between;font-size:1rem!important;color:var(--text)!important}
+.switch-row input{width:48px;height:28px;accent-color:var(--primary)}
+.tabs{display:flex;gap:8px}.tabs button{flex:1;height:46px;border-radius:12px;background:var(--background);font-weight:600;border:2px solid transparent}
+.tabs button{display:flex;align-items:center;justify-content:center;gap:8px}.os-ico{width:20px;height:20px;object-fit:contain;flex:none}[data-theme=dark] .os-ico.apple{filter:invert(1)}
+.tabs button.on{border-color:var(--primary);color:var(--primary-d)}
+.modal ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+
+.toasts{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 12px);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:80;pointer-events:none}
+.toast{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto;width:max-content;max-width:min(92vw,440px);background:#1f2937;color:#fff;padding:12px 14px 12px 18px;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.3);animation:drop .25s ease;font-size:.92rem;line-height:1.35}
+.toast .msg{flex:1 1 auto;min-width:0;overflow-wrap:break-word;text-align:left}
+.toast.warn{background:#b45309}.toast.out{opacity:0;transition:opacity .3s}
+.quick{margin:-6px 0 16px}
+.quick-title{font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 4px 8px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:40px;padding:0 16px;border-radius:99px;background:var(--card);box-shadow:var(--shadow);font-weight:600;white-space:nowrap;border:2px solid transparent;transition:transform .15s,border-color .15s}
+.chip:hover{border-color:var(--primary)}.chip:active{transform:scale(.95)}
+.sugg{display:flex;flex-direction:column;gap:6px;margin-top:-6px}
+.sg{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:12px;background:var(--background);text-align:left;font-weight:600}
+.sg:hover,.sg:focus-visible{outline:2px solid var(--primary)}
+.sg small{color:var(--muted);font-weight:500;white-space:nowrap}
+.order{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ord{display:flex;align-items:center;gap:10px;background:var(--background);border-radius:14px;padding:6px 8px 6px 6px;min-height:52px;user-select:none;-webkit-user-select:none}
+.ord.drag{box-shadow:0 8px 20px rgba(0,0,0,.25);background:var(--primary-soft);outline:2px solid var(--primary)}
+.grip{font-size:1.3rem;color:var(--muted);cursor:grab;padding:10px 8px;touch-action:none}
+.ord .ic{font-size:1.2rem}.ord .nm{flex:1;font-weight:600}
+.mv{width:40px;height:40px;border-radius:10px;background:var(--card);color:var(--text)}
+.mv:disabled{opacity:.3;cursor:default}
+.toast.act{pointer-events:auto}
+.toast .undo{flex:none;white-space:nowrap;background:rgba(255,255,255,.18);color:#fff;font-weight:700;padding:8px 14px;border-radius:10px}
+.toast .undo:active{transform:scale(.95)}
+.btn.block{width:100%}
+
+
+@keyframes pop{from{opacity:0;transform:scale(.95) translateY(-6px)}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+@keyframes fade{from{opacity:0}}
+@keyframes slide{from{transform:translateY(40px);opacity:0}}
+@keyframes drop{from{opacity:0;transform:translateY(-14px)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo" aria-hidden="true">🛒</div>
+    <div class="titles">
+      <h1>Nakoupeno!</h1>
+      <p>Váš nákupní seznam vždy po ruce.</p>
+    </div>
+    <button class="icon-btn" id="themeBtn" aria-label="Přepnout tmavý režim">🌙</button>
+    <div class="menu-wrap">
+      <button class="icon-btn" id="menuBtn" aria-label="Otevřít menu" aria-haspopup="true" aria-expanded="false">⋮</button>
+      <div class="menu" id="menu" hidden role="menu">
+        <button role="menuitem" data-act="settings">⚙️ Nastavení</button>
+        <button role="menuitem" data-act="order">↕️ Pořadí kategorií</button>
+        <button role="menuitem" data-act="install">📲 Jak nainstalovat aplikaci</button>
+        <button role="menuitem" data-act="clearBought" class="danger">🗑️ Vymazat zakoupené</button>
+        <button role="menuitem" data-act="clearAll" class="danger">🗑️ Vymazat celý seznam</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="search">
+    <span aria-hidden="true">🔍</span>
+    <input id="search" type="search" placeholder="Hledat v nákupním seznamu..." aria-label="Hledat v nákupním seznamu" autocomplete="off">
+  </div>
+
+  <section class="stats" aria-label="Statistiky">
+    <div class="stat"><span>Celkem</span><b id="sTotal">0</b><i>🛒</i></div>
+    <div class="stat todo"><span>Koupit</span><b id="sLeft">0</b><i>🟣</i></div>
+    <div class="stat done"><span>Koupeno</span><b id="sDone">0</b><i>🟢</i></div>
+  </section>
+
+  <nav class="filters" aria-label="Filtr">
+    <button data-f="all" class="on">Vše</button>
+    <button data-f="todo">Koupit</button>
+    <button data-f="done">Koupeno</button>
+  </nav>
+
+  <section class="quick" id="quick" hidden aria-label="Rychlé přidání">
+    <div class="quick-title">⚡ Rychlé přidání</div>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <main id="list" aria-live="polite"></main>
+</div>
+
+<button class="fab" id="fab">＋ Přidat položku</button>
+
+<!-- Modal přidání/úpravy -->
+<div class="overlay" id="itemModal" hidden>
+  <form class="modal" id="itemForm" novalidate role="dialog" aria-modal="true" aria-labelledby="itemTitle">
+    <h2 id="itemTitle">Přidat položku</h2>
+    <label>Název
+      <input id="name" placeholder="Co potřebujete koupit?" maxlength="80" autocomplete="off">
+    </label>
+    <div class="sugg" id="sugg" hidden role="listbox" aria-label="Návrhy"></div>
+    <label>Množství
+      <input id="qty" placeholder="např. 2 ks, 1 kg, 500 g" maxlength="30" autocomplete="off">
+    </label>
+    <label>Kategorie
+      <select id="cat"></select>
+    </label>
+    <label class="switch-row">⭐ Oblíbená položka
+      <input type="checkbox" id="fav" role="switch">
+    </label>
+    <p class="err" id="err" hidden>⚠️ Zadejte název položky.</p>
+    <div class="actions">
+      <button type="button" class="btn ghost" data-close>Zrušit</button>
+      <button type="submit" class="btn primary" id="submitBtn">＋ Přidat položku</button>
+    </div>
+  </form>
+</div>
+
+<!-- Modal potvrzení -->
+<div class="overlay" id="confirmModal" hidden>
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="cTitle">
+    <h2 id="cTitle">Potvrdit</h2>
+    <p id="cText"></p>
+    <div class="actions">
+      <button class="btn ghost" data-close>Zrušit</button>
+      <button class="btn danger-btn" id="cOk">Odstranit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nastavení -->
+<div class="overlay" id="settingsModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sTitle">
+    <h2 id="sTitle">⚙️ Nastavení</h2>
+    <label class="switch-row">Tmavý režim
+      <input type="checkbox" id="darkSwitch" role="switch">
+    </label>
+    <label class="switch-row">Vibrace při odškrtnutí
+      <input type="checkbox" id="hapticSwitch" role="switch">
+    </label>
+    <p class="hint">Vibrace funguje na Androidu. iPhone ji z webových aplikací nepodporuje.</p>
+    <button type="button" class="btn ghost block" id="openOrder">↕️ Pořadí kategorií</button>
+    <p class="hint">Data se ukládají pouze v tomto zařízení (localStorage). Sdílení mezi telefony bude ve verzi 2.</p>
+    <div class="actions"><button class="btn primary" data-close>Hotovo</button></div>
+  </div>
+</div>
+
+<!-- Modal pořadí kategorií -->
+<div class="overlay" id="orderModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="oTitle">
+    <h2 id="oTitle">↕️ Pořadí kategorií</h2>
+    <p class="hint">Přetáhni kategorii za ☰ nebo použij šipky. Seřaď je podle toho, jak procházíš svůj obchod.</p>
+    <ul class="order" id="orderList"></ul>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="orderReset">Výchozí pořadí</button>
+      <button type="button" class="btn primary" data-close>Hotovo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal instalace -->
+<div class="overlay" id="installModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="iTitle">
+    <h2 id="iTitle">📲 Instalace aplikace</h2>
+    <p id="detect" class="hint"></p>
+    <button class="btn primary" id="nativeInstall" hidden>📲 Nainstalovat aplikaci</button>
+    <button class="btn ghost" id="openChrome" hidden>Otevřít v Google Chrome</button>
+    <div class="tabs">
+      <button data-g="ios"><img class="os-ico apple" src="data:image/png;base64,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" alt="" width="20" height="20"> iPhone / iPad</button>
+      <button data-g="android"><img class="os-ico" src="data:image/png;base64,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" alt="" width="20" height="20"> Android</button>
+    </div>
+    <ol id="g-ios" hidden>
+      <li>Otevři aplikaci v <b>Safari</b>.</li>
+      <li>Klepni na tlačítko <b>Sdílet</b>.</li>
+      <li>Vyber <b>Přidat na plochu</b>.</li>
+      <li>Potvrď tlačítkem <b>Přidat</b>.</li>
+      <li>Aplikace se objeví na domovské obrazovce.</li>
+    </ol>
+    <ol id="g-android" hidden>
+      <li>Otevři aplikaci v <b>Google Chrome</b>.</li>
+      <li>Otevři menu prohlížeče.</li>
+      <li>Vyber <b>Instalovat aplikaci</b> nebo <b>Přidat na plochu</b>.</li>
+      <li>Potvrď instalaci.</li>
+      <li>Aplikace se objeví mezi ostatními aplikacemi.</li>
+    </ol>
+    <div class="actions"><button class="btn ghost" data-close>Zavřít</button></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script>
+"use strict";
+const CATS=[["Pečivo","🥖"],["Mléčné výrobky","🥛"],["Ovoce a zelenina","🍎"],["Maso","🥩"],["Nápoje","🥤"],["Sladkosti","🍫"],["Drogerie","🧴"],["Ostatní","📦"]];
+const ICON=Object.fromEntries(CATS);
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+
+function load(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch{return d;}}
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+
+let items=load("shoppingList",[]);
+let filter=load("filter","all");
+let editId=null,deferred=null,confirmCb=null,catTouched=false;
+const save=()=>store("shoppingList",items);
+
+// ---------- toasty ----------
+function toast(msg,warn,act){
+  const t=el("div","toast"+(warn?" warn":"")+(act?" act":""));
+  t.append(el("span","msg",msg));
+  let timer;
+  const kill=()=>{clearTimeout(timer);t.classList.add("out");setTimeout(()=>t.remove(),300);};
+  if(act){const b=el("button","undo",act.label);b.type="button";b.onclick=()=>{kill();act.fn();};t.append(b);}
+  $("#toasts").appendChild(t);
+  timer=setTimeout(kill,act?5500:2400);
+}
+
+// ---------- vibrace ----------
+let haptic=load("haptic",true);
+function buzz(p){if(haptic&&navigator.vibrate){try{navigator.vibrate(p);}catch{}}}
+const newId=()=>Date.now()*1000+Math.floor(Math.random()*1000);
+
+// ---------- historie, oblíbené, našeptávač ----------
+const SEED=[["Mléko","Mléčné výrobky"],["Máslo","Mléčné výrobky"],["Vejce","Mléčné výrobky"],["Sýr","Mléčné výrobky"],["Jogurt","Mléčné výrobky"],["Smetana","Mléčné výrobky"],["Tvaroh","Mléčné výrobky"],
+["Chléb","Pečivo"],["Rohlíky","Pečivo"],["Housky","Pečivo"],["Toastový chléb","Pečivo"],["Koláč","Pečivo"],
+["Jablka","Ovoce a zelenina"],["Banány","Ovoce a zelenina"],["Brambory","Ovoce a zelenina"],["Cibule","Ovoce a zelenina"],["Rajčata","Ovoce a zelenina"],["Okurka","Ovoce a zelenina"],["Mrkev","Ovoce a zelenina"],["Paprika","Ovoce a zelenina"],["Citron","Ovoce a zelenina"],["Salát","Ovoce a zelenina"],
+["Kuřecí maso","Maso"],["Mleté maso","Maso"],["Šunka","Maso"],["Salám","Maso"],["Párky","Maso"],["Uzené","Maso"],
+["Voda","Nápoje"],["Džus","Nápoje"],["Pivo","Nápoje"],["Káva","Nápoje"],["Čaj","Nápoje"],["Limonáda","Nápoje"],["Víno","Nápoje"],
+["Čokoláda","Sladkosti"],["Sušenky","Sladkosti"],["Bonbóny","Sladkosti"],["Zmrzlina","Sladkosti"],
+["Toaletní papír","Drogerie"],["Mýdlo","Drogerie"],["Šampon","Drogerie"],["Zubní pasta","Drogerie"],["Prací prášek","Drogerie"],["Utěrky","Drogerie"],["Papírové kapesníky","Drogerie"],
+["Mouka","Ostatní"],["Cukr","Ostatní"],["Sůl","Ostatní"],["Těstoviny","Ostatní"],["Rýže","Ostatní"],["Olej","Ostatní"]];
+let hist=load("history",{});
+const norm=t=>String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+function remember(name,category,quantity,fav,bump){
+  const k=norm(name);if(!k)return;
+  const h=hist[k]||{name,count:0,fav:false};
+  h.name=name;h.category=category;h.quantity=quantity||"";h.count=(h.count||0)+(bump?1:0);h.last=Date.now();
+  if(typeof fav==="boolean")h.fav=fav;
+  hist[k]=h;
+  const keys=Object.keys(hist);
+  if(keys.length>300){keys.filter(x=>!hist[x].fav).sort((a,b)=>(hist[a].count-hist[b].count)||(hist[a].last-hist[b].last)).slice(0,keys.length-300).forEach(x=>delete hist[x]);}
+  store("history",hist);
+}
+function pool(){
+  const m=new Map();
+  for(const [n,c] of SEED)m.set(norm(n),{name:n,category:c,quantity:"",count:0,fav:false});
+  for(const [k,h] of Object.entries(hist))m.set(k,h);
+  return [...m.values()];
+}
+
+// ---------- modaly ----------
+function openModal(id){$(id).hidden=false;}
+function closeModals(){$$(".overlay").forEach(o=>o.hidden=true);confirmCb=null;}
+document.addEventListener("click",e=>{
+  if(e.target.closest("[data-close]")||e.target.classList.contains("overlay"))closeModals();
+  if(!e.target.closest(".menu-wrap"))closeMenu();
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModals();closeMenu();}});
+function ask(title,text,okLabel,cb){
+  $("#cTitle").textContent=title;$("#cText").textContent=text;$("#cOk").textContent=okLabel;
+  confirmCb=cb;openModal("#confirmModal");
+}
+$("#cOk").onclick=()=>{const cb=confirmCb;closeModals();if(cb)cb();};
+
+// ---------- menu ----------
+function closeMenu(){$("#menu").hidden=true;$("#menuBtn").setAttribute("aria-expanded","false");}
+$("#menuBtn").onclick=e=>{e.stopPropagation();const h=$("#menu").hidden;$("#menu").hidden=!h;$("#menuBtn").setAttribute("aria-expanded",String(h));};
+$("#menu").onclick=e=>{
+  const a=e.target.closest("[data-act]");if(!a)return;closeMenu();
+  const act=a.dataset.act;
+  if(act==="settings"){$("#darkSwitch").checked=document.documentElement.dataset.theme==="dark";$("#hapticSwitch").checked=haptic;openModal("#settingsModal");}
+  if(act==="order"){renderOrder();openModal("#orderModal");}
+  if(act==="install")showInstall();
+  if(act==="clearBought")ask("Vymazat zakoupené","Opravdu chcete odstranit všechny zakoupené položky?","Odstranit",()=>{
+    const removed=items.filter(i=>i.completed);if(!removed.length){toast("Žádné zakoupené položky.",true);return;}
+    items=items.filter(i=>!i.completed);save();render();buzz(40);
+    toast("🗑️ Zakoupené položky byly odstraněny.",false,{label:"Zpět",fn:()=>{items=[...removed,...items];save();render();buzz(30);}});});
+  if(act==="clearAll")ask("Vymazat celý seznam","Opravdu chcete vymazat celý nákupní seznam?","Vymazat vše",()=>{
+    const removed=items;if(!removed.length)return;
+    items=[];save();render();buzz(40);
+    toast("🗑️ Seznam byl vymazán.",false,{label:"Zpět",fn:()=>{items=[...removed,...items];save();render();buzz(30);}});});
+};
+
+// ---------- dark mode ----------
+function setTheme(t,persist=true){
+  document.documentElement.dataset.theme=t;
+  $("#themeBtn").textContent=t==="dark"?"☀️":"🌙";
+  $("#themeBtn").setAttribute("aria-label",t==="dark"?"Přepnout na světlý režim":"Přepnout na tmavý režim");
+  document.querySelector('meta[name=theme-color]').content=t==="dark"?"#0e1417":"#0d9488";
+  if(persist)store("theme",t);
+}
+setTheme(load("theme",matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"),false);
+$("#themeBtn").onclick=()=>setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
+$("#darkSwitch").onchange=e=>setTheme(e.target.checked?"dark":"light");
+$("#hapticSwitch").onchange=e=>{haptic=e.target.checked;store("haptic",haptic);buzz(30);};
+$("#openOrder").onclick=()=>{closeModals();renderOrder();openModal("#orderModal");};
+
+// ---------- pořadí kategorií ----------
+let catOrder=load("catOrder",[]);
+function orderedCats(){
+  const names=CATS.map(c=>c[0]);
+  const o=catOrder.filter(n=>names.includes(n));
+  for(const n of names)if(!o.includes(n))o.push(n);
+  return o.map(n=>[n,ICON[n]]);
+}
+function saveOrder(arr){catOrder=arr;store("catOrder",arr);render();}
+function moveCat(i,d){
+  const names=orderedCats().map(c=>c[0]),j=i+d;if(j<0||j>=names.length)return;
+  [names[i],names[j]]=[names[j],names[i]];saveOrder(names);renderOrder();buzz(15);
+}
+function attachDrag(li,handle){
+  handle.addEventListener("pointerdown",e=>{
+    e.preventDefault();const ul=li.parentElement;
+    try{handle.setPointerCapture(e.pointerId);}catch{}
+    li.classList.add("drag");buzz(15);
+    const mv=ev=>{
+      const t=document.elementFromPoint(ev.clientX,ev.clientY),o=t&&t.closest("li.ord");
+      if(!o||o===li||o.parentElement!==ul)return;
+      const r=o.getBoundingClientRect();
+      if(ev.clientY<r.top+r.height/2)ul.insertBefore(li,o);else ul.insertBefore(li,o.nextSibling);
+    };
+    const end=()=>{
+      handle.removeEventListener("pointermove",mv);handle.removeEventListener("pointerup",end);handle.removeEventListener("pointercancel",end);
+      li.classList.remove("drag");
+      saveOrder([...ul.children].map(x=>x.dataset.cat));renderOrder();
+    };
+    handle.addEventListener("pointermove",mv);handle.addEventListener("pointerup",end);handle.addEventListener("pointercancel",end);
+  });
+}
+function renderOrder(){
+  const ul=$("#orderList");ul.replaceChildren();
+  const cur=orderedCats();
+  cur.forEach(([name,icon],i)=>{
+    const li=el("li","ord");li.dataset.cat=name;
+    const grip=el("span","grip","☰");grip.setAttribute("aria-hidden","true");
+    const up=el("button","mv","▲"),dn=el("button","mv","▼");
+    up.type=dn.type="button";
+    up.setAttribute("aria-label","Posunout nahoru: "+name);dn.setAttribute("aria-label","Posunout dolů: "+name);
+    up.disabled=i===0;dn.disabled=i===cur.length-1;
+    up.onclick=()=>moveCat(i,-1);dn.onclick=()=>moveCat(i,1);
+    li.append(grip,el("span","ic",icon),el("span","nm",name),up,dn);
+    attachDrag(li,grip);ul.append(li);
+  });
+}
+$("#orderReset").onclick=()=>{saveOrder([]);renderOrder();};
+
+// ---------- rychlé přidání ----------
+function quickAdd(h){
+  const ex=items.find(i=>norm(i.name)===norm(h.name));
+  if(ex&&ex.completed){ex.completed=false;save();render();buzz(30);toast(`↩️ ${ex.name} vráceno do seznamu.`);return;}
+  items.push({id:newId(),name:h.name,quantity:h.quantity||"",category:h.category||"Ostatní",completed:false});
+  remember(h.name,h.category||"Ostatní",h.quantity,undefined,true);
+  save();render();buzz(30);toast(`✅ Položka „${h.name}“ byla přidána.`);
+}
+function renderQuick(){
+  const open=new Set(items.filter(i=>!i.completed).map(i=>norm(i.name)));
+  const list=Object.values(hist).filter(h=>(h.fav||h.count>=2)&&!open.has(norm(h.name)))
+    .sort((a,b)=>(Number(!!b.fav)-Number(!!a.fav))||((b.count||0)-(a.count||0))).slice(0,14);
+  const box=$("#chips");box.replaceChildren();
+  $("#quick").hidden=!list.length;
+  for(const h of list){
+    const b=el("button","chip",(h.fav?"⭐ ":"")+h.name);b.type="button";
+    b.setAttribute("aria-label","Rychle přidat: "+h.name);b.onclick=()=>quickAdd(h);box.append(b);
+  }
+}
+
+// ---------- render ----------
+let prev={t:0,l:0,d:0};
+function setStat(id,v,k){const e=$(id);e.textContent=v;if(prev[k]!==v){e.classList.add("bump");setTimeout(()=>e.classList.remove("bump"),200);prev[k]=v;}}
+function plural(n){return n===1?"položka":n>=2&&n<=4?"položky":"položek";}
+
+function render(){
+  const done=items.filter(i=>i.completed).length;
+  renderQuick();
+  setStat("#sTotal",items.length,"t");setStat("#sLeft",items.length-done,"l");setStat("#sDone",done,"d");
+  $$(".filters button").forEach(b=>b.classList.toggle("on",b.dataset.f===filter));
+
+  const q=$("#search").value.trim().toLowerCase();
+  const vis=items.filter(i=>(filter==="all"||(filter==="done")===i.completed)&&i.name.toLowerCase().includes(q));
+  const box=$("#list");box.replaceChildren();
+
+  if(!vis.length){
+    const e=el("div","empty");
+    if(!items.length){
+      e.append(el("div","big","🛒"),el("h2",null,"Seznam je prázdný"),
+        el("p",null,"Přidejte první položku a můžete začít plánovat svůj nákup."));
+      const b=el("button","btn primary","＋ Přidat položku");b.onclick=()=>openItem();e.append(b);
+    }else{
+      e.append(el("div","big","🔎"),el("h2",null,"Nic nenalezeno"),el("p",null,"Zkuste změnit hledání nebo filtr."));
+    }
+    box.append(e);return;
+  }
+  for(const [cat,icon] of orderedCats()){
+    const g=vis.filter(i=>i.category===cat).sort((a,b)=>a.completed-b.completed);
+    if(!g.length)continue;
+    const card=el("section","cat");
+    const head=el("div","cat-head");
+    head.append(el("span","ic",icon),el("span","name",cat),el("span","count",String(g.length)));
+    head.querySelector(".count").setAttribute("aria-label",g.length+" "+plural(g.length));
+    card.append(head);
+    for(const it of g)card.append(itemRow(it));
+    box.append(card);
+  }
+}
+function itemRow(it){
+  const row=el("div","item"+(it.completed?" done":""));row.dataset.id=it.id;
+  const chk=el("label","chk");
+  const cb=el("input");cb.type="checkbox";cb.checked=it.completed;cb.setAttribute("aria-label","Koupeno: "+it.name);
+  cb.onchange=()=>toggle(it.id);
+  chk.append(cb,el("span",null,"✓"));
+  const info=el("div","info");info.append(el("span","n",it.name));
+  if(it.quantity)info.append(el("span","q",it.quantity));
+  info.onclick=()=>toggle(it.id);
+  const ed=el("button","act","✏️");ed.setAttribute("aria-label","Upravit položku");ed.onclick=()=>openItem(it.id);
+  const del=el("button","act","🗑️");del.setAttribute("aria-label","Smazat položku");
+  del.onclick=()=>{
+    row.classList.add("removing");buzz(40);
+    setTimeout(()=>{
+      const idx=items.findIndex(x=>x.id===it.id);if(idx<0)return;
+      const [gone]=items.splice(idx,1);save();render();
+      toast(`🗑️ Položka „${gone.name}“ byla odstraněna.`,false,{label:"Zpět",fn:()=>{
+        items.splice(Math.min(idx,items.length),0,gone);save();render();buzz(30);toast("↩️ Položka byla obnovena.");}});
+    },230);
+  };
+  row.append(chk,info,ed,del);return row;
+}
+function toggle(id){
+  const it=items.find(i=>i.id===id);if(!it)return;
+  it.completed=!it.completed;save();render();buzz(it.completed?50:25);
+  toast(it.completed?`✅ ${it.name} označeno jako koupené.`:`↩️ ${it.name} vráceno do seznamu.`);
+}
+
+// ---------- filtry + hledání ----------
+$$(".filters button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;store("filter",filter);render();});
+$("#search").oninput=render;
+
+// ---------- formulář ----------
+$("#cat").replaceChildren(...CATS.map(([c,i])=>{const o=el("option",null,i+" "+c);o.value=c;return o;}));
+function openItem(id){
+  editId=id||null;const it=id?items.find(i=>i.id===id):null;
+  $("#itemTitle").textContent=it?"Upravit položku":"Přidat položku";
+  $("#submitBtn").textContent=it?"💾 Uložit změny":"＋ Přidat položku";
+  $("#name").value=it?it.name:"";$("#qty").value=it?it.quantity:"";$("#cat").value=it?it.category:"Ostatní";
+  catTouched=!!it;$("#fav").checked=it?!!(hist[norm(it.name)]&&hist[norm(it.name)].fav):false;
+  $("#sugg").hidden=true;$("#err").hidden=true;openModal("#itemModal");setTimeout(()=>$("#name").focus(),60);
+}
+$("#fab").onclick=()=>openItem();
+$("#itemForm").onsubmit=e=>{
+  e.preventDefault();
+  const name=$("#name").value.trim(),quantity=$("#qty").value.trim(),category=$("#cat").value;
+  if(!name){$("#err").hidden=false;$("#name").focus();toast("⚠️ Zadejte název položky.",true);return;}
+  const fav=$("#fav").checked;
+  if(editId){Object.assign(items.find(i=>i.id===editId),{name,quantity,category});remember(name,category,quantity,fav,false);toast(`✅ Položka „${name}“ byla upravena.`);}
+  else{items.push({id:newId(),name,quantity,category,completed:false});remember(name,category,quantity,fav,true);buzz(30);toast(`✅ Položka „${name}“ byla přidána.`);}
+  save();closeModals();render();
+};
+$("#cat").onchange=()=>{catTouched=true;};
+function pick(h){
+  $("#name").value=h.name;
+  if(h.category&&[...$("#cat").options].some(o=>o.value===h.category))$("#cat").value=h.category;
+  if(!$("#qty").value&&h.quantity)$("#qty").value=h.quantity;
+  $("#fav").checked=!!h.fav;catTouched=false;
+  $("#sugg").hidden=true;$("#err").hidden=true;$("#qty").focus();
+}
+function showSugg(){
+  const box=$("#sugg");box.replaceChildren();
+  const q=norm($("#name").value),typed=$("#name").value.trim();
+  if(!q){box.hidden=true;return;}
+  const c=pool().map(h=>({h,n:norm(h.name)})).filter(x=>x.n.includes(q)&&x.h.name!==typed)
+    .sort((a,b)=>(Number(b.n.startsWith(q))-Number(a.n.startsWith(q)))||(Number(!!b.h.fav)-Number(!!a.h.fav))||((b.h.count||0)-(a.h.count||0))||a.n.localeCompare(b.n,"cs")).slice(0,5);
+  for(const {h} of c){
+    const b=el("button","sg");b.type="button";b.setAttribute("role","option");
+    b.append(el("span",null,h.name),el("small",null,(ICON[h.category]||"")+" "+(h.category||"")));
+    b.onclick=()=>pick(h);box.append(b);
+  }
+  box.hidden=!c.length;
+}
+$("#name").oninput=()=>{
+  $("#err").hidden=true;showSugg();
+  if(!catTouched&&!editId){
+    const k=norm($("#name").value),ex=k&&pool().find(h=>norm(h.name)===k);
+    if(ex&&ex.category&&[...$("#cat").options].some(o=>o.value===ex.category))$("#cat").value=ex.category;
+  }
+};
+
+// ---------- instalace PWA ----------
+const ua=navigator.userAgent;
+const isIOS=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const isAndroid=/Android/.test(ua);
+function guide(g){$("#g-ios").hidden=g!=="ios";$("#g-android").hidden=g!=="android";$$(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.g===g));}
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;});
+addEventListener("appinstalled",()=>{deferred=null;toast("✅ Aplikace byla nainstalována.");});
+function showInstall(){
+  $("#detect").textContent=isIOS?"Používáte iPhone? Zobrazen návod pro iPhone.":isAndroid?"Používáte Android? Zobrazen návod pro Android.":"Vyberte své zařízení:";
+  $("#nativeInstall").hidden=!deferred;
+  $("#openChrome").hidden=!/EdgA\//.test(ua);
+  guide(isIOS?"ios":isAndroid?"android":"");openModal("#installModal");
+}
+$$(".tabs button").forEach(b=>b.onclick=()=>guide(b.dataset.g));
+$("#openChrome").onclick=()=>{location.href="intent://"+location.host+location.pathname+location.search+"#Intent;scheme=https;package=com.android.chrome;end";};
+$("#nativeInstall").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;closeModals();};
+
+render();
+if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));}
+</script>
+</body>
+</html>
